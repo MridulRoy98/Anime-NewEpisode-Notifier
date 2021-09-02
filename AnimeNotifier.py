@@ -30,13 +30,6 @@ def getTimer(url):
 
     print(daysSplit, "days ", hoursSplit, "hours ", minutesSplit, "minutes ")
 
-    # numberOfHours = int(hours[0])
-    # numberOfMinutes = int(minutes[0])
-    # print(numberOfDays)
-    # print(numberOfHours)
-    # for i in commaSplit:
-    #     spaceSplit = commaSplit.split(' ')
-    #     print(spaceSplit)
 
 def merge_pickles(pkl1, pkl2, mergedpkl):
     """Merges two pickle files into one"""
