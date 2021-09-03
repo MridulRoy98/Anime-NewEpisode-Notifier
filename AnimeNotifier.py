@@ -16,32 +16,62 @@ def getTimer(url, desiredAnime, followed_pkl):
     html = requests.get('http://9anime.to' + url)
     html.raise_for_status()
     soup = bs4.BeautifulSoup(html.text, 'html.parser')
-    newSoup = soup.find('span', {'class': 'timer'})
-    timer = newSoup.text
-    commaSplitList = timer.split(',')
+    try:
+        newSoup = soup.find('span', {'class': 'timer'})
+        strTimer = newSoup.text
+        setTargetTime(strTimer)
+    except:
+        print("The Anime has finished airing")
 
     # print(re.findall("\d+",timer)) # Regex to get digits from the timer
 
-    # Getting integer values from the timer
+def setTargetTime(strTimer):
+    '''Converts and writes the anime episode airing date-time'''
+
+    commaSplitList = strTimer.split(',')
+
+    # Getting Digits from the strTimer
     days = commaSplitList[0]
     hours = commaSplitList[1]
     minutes = commaSplitList[2]
 
+    # Converting them to integers
     daysSplit = int(days.split(' ')[0])
     hoursSplit = int(hours.split(' ')[1])
     minutesSplit = int(minutes.split(' ')[1])
 
     targetDate = datetime.now() + timedelta(days=daysSplit, hours=hoursSplit, minutes=minutesSplit)
-    formatedTargetDate = targetDate.strftime('%Y/%m/%d %I:%M:%S')
-    # Adding to a Dictionary
-    followedDictionary[desiredAnime] = formatedTargetDate
-    write_pickle(followedDictionary, followed_pkl)
 
-    # print(daysSplit, "days ", hoursSplit, "hours ", minutesSplit, "minutes ")
+    #Readable format i.e.(2021-09-04 19:35:14),
+    # NOTE TO SELF: Replace '%H' with '%I' for 12 hour format
+    formatedTargetDate = targetDate.strftime('%Y/%m/%d %H:%M:%S')
+
+    # Adding to a Dictionary
+    # Using desired anime as key and the target date+time as value
+    followedDictionary[desiredAnime] = formatedTargetDate
+
+    # writing the dictionary in a pickle file
+    write_pickle(followedDictionary, followed_pkl)
     print('\n')
-    for i,j in followedDictionary.items():
+    for i, j in followedDictionary.items():
         print(i, "--will air on: ", j)
-    # print(read_pickle(followed_pkl))
+    countdown(desiredAnime)
+
+def countdown(desiredAnime):
+
+    loadedfile = read_pickle('Following.pkl')
+    date_time_str = loadedfile[desiredAnime]
+    date_time_obj = datetime.strptime(date_time_str, '%Y/%m/%d %H:%M:%S')
+    currentTime = datetime.now()
+    time_delta = (date_time_obj - currentTime)
+
+    #Converting to seconds
+    days, seconds = time_delta.days, time_delta.seconds
+    hours = days * 24 + seconds // 3600
+    minutes = (seconds % 3600) // 60 + (hours * 60)
+    seconds = (seconds % 60) + (minutes * 60)
+    print(seconds)
+    return seconds
 
 def merge_pickles(pkl1, pkl2, mergedpkl):
     """Merges two pickle files into one"""
@@ -151,7 +181,7 @@ if __name__ == "__main__":
 
     desiredAnime = animeName.lower()
     for key in animeDictionary.keys():
-        if desiredAnime.lower() in key.lower():
+        if desiredAnime in key.lower():
             getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
 
             # print(animeDictionary[desiredAnime])
