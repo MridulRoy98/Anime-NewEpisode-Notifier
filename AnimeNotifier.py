@@ -12,7 +12,6 @@ def getTimer(url):
     html = requests.get('http://9anime.to'+url)
     html.raise_for_status()
     soup = bs4.BeautifulSoup(html.text, 'html.parser')
-    # print(soup.prettify())
     newSoup = soup.find('span', {'class': 'timer'})
     timer = newSoup.text
     commaSplitList = timer.split(',')
