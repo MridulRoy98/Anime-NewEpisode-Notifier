@@ -1,24 +1,28 @@
 import pickle
+import re
 from time import sleep
 import bs4
 import requests
-
 import sys
+from datetime import datetime
+from datetime import timedelta
+
 sys.setrecursionlimit(10000)
 
-def getTimer(url):
+
+def getTimer(url, desiredAnime, followed_pkl):
     """Scrapes the site for the timer"""
 
-    html = requests.get('http://9anime.to'+url)
+    html = requests.get('http://9anime.to' + url)
     html.raise_for_status()
     soup = bs4.BeautifulSoup(html.text, 'html.parser')
     newSoup = soup.find('span', {'class': 'timer'})
     timer = newSoup.text
     commaSplitList = timer.split(',')
 
-    hours = []
-    days = []
-    minutes = []
+    # print(re.findall("\d+",timer)) # Regex to get digits from the timer
+
+    # Getting integer values from the timer
     days = commaSplitList[0]
     hours = commaSplitList[1]
     minutes = commaSplitList[2]
@@ -27,8 +31,17 @@ def getTimer(url):
     hoursSplit = int(hours.split(' ')[1])
     minutesSplit = int(minutes.split(' ')[1])
 
-    print(daysSplit, "days ", hoursSplit, "hours ", minutesSplit, "minutes ")
+    targetDate = datetime.now() + timedelta(days=daysSplit, hours=hoursSplit, minutes=minutesSplit)
+    formatedTargetDate = targetDate.strftime('%Y/%m/%d %I:%M:%S')
+    # Adding to a Dictionary
+    followedDictionary[desiredAnime] = formatedTargetDate
+    write_pickle(followedDictionary, followed_pkl)
 
+    # print(daysSplit, "days ", hoursSplit, "hours ", minutesSplit, "minutes ")
+    print('\n')
+    for i,j in followedDictionary.items():
+        print(i, "--will air on: ", j)
+    # print(read_pickle(followed_pkl))
 
 def merge_pickles(pkl1, pkl2, mergedpkl):
     """Merges two pickle files into one"""
@@ -116,7 +129,7 @@ def scrape_pages(start, end, pklfile):
             if type(i) == str and type(j) == str:
                 animeDictionary[i.lower()] = j
             else:
-                print(type(i),type(j))
+                print(type(i), type(j))
 
         # Incrementing the page number
         pageNumber += 1
@@ -125,17 +138,22 @@ def scrape_pages(start, end, pklfile):
 
 
 if __name__ == "__main__":
-    saved_pkl = "AnimeList"
+    saved_pkl = "AnimeList.pkl"
+    followed_pkl = "Following.pkl"
     flag = False
 
+    # Following line is only for scraping again
     # scrape_pages(1, 2, saved_pkl)
-
+    followedDictionary = {}
     animeDictionary = read_pickle(saved_pkl)
+    followedDictionary = read_pickle(followed_pkl)
+    animeName = input("Which anime do you want to follow: ")
 
-    desiredAnime = input("Which anime do you want to follow: ")
+    desiredAnime = animeName.lower()
     for key in animeDictionary.keys():
         if desiredAnime.lower() in key.lower():
-            getTimer(animeDictionary[desiredAnime])
+            getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
+
             # print(animeDictionary[desiredAnime])
             flag = False
             break
@@ -143,4 +161,3 @@ if __name__ == "__main__":
             flag = True
     if flag:
         print("Your desired anime doesn't exist. BAKA!")
-
