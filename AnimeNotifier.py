@@ -52,9 +52,9 @@ def setTargetTime(strTimer):
 
     # writing the dictionary in a pickle file
     write_pickle(followedDictionary, followed_pkl)
-    print('\n')
-    for i, j in followedDictionary.items():
-        print(i, "--will air on: ", j)
+    # print('\n')
+    # for i, j in followedDictionary.items():
+    #     print(i, "--will air on: ", j)
     countdown(desiredAnime)
 
 def countdown(desiredAnime):
@@ -70,7 +70,7 @@ def countdown(desiredAnime):
     hours = days * 24 + seconds // 3600
     minutes = (seconds % 3600) // 60 + (hours * 60)
     seconds = (seconds % 60) + (minutes * 60)
-    print(seconds)
+
     return seconds
 
 def merge_pickles(pkl1, pkl2, mergedpkl):
@@ -178,16 +178,20 @@ if __name__ == "__main__":
     animeDictionary = read_pickle(saved_pkl)
     followedDictionary = read_pickle(followed_pkl)
     animeName = input("Which anime do you want to follow: ")
-
     desiredAnime = animeName.lower()
-    for key in animeDictionary.keys():
+    for key in followedDictionary.keys():
         if desiredAnime in key.lower():
-            getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
-
-            # print(animeDictionary[desiredAnime])
-            flag = False
-            break
+            remaining = countdown(desiredAnime)
+            print("You are already following this anime, it will air on - ", followedDictionary[key], f" - in exactly {remaining} seconds")
         else:
-            flag = True
+            for key in animeDictionary.keys():
+                if desiredAnime in key.lower():
+                    getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
+
+                    # print(animeDictionary[desiredAnime])
+                    flag = False
+                    break
+                else:
+                    flag = True
     if flag:
         print("Your desired anime doesn't exist. BAKA!")
