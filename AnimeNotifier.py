@@ -1,3 +1,4 @@
+import os
 import pickle
 import re
 from time import sleep
@@ -19,13 +20,18 @@ def getTimer(url, desiredAnime, followed_pkl):
     try:
         newSoup = soup.find('span', {'class': 'timer'})
         strTimer = newSoup.text
-        setTargetTime(strTimer)
+        setTargetTime(desiredAnime, strTimer)
+
     except:
         print("The Anime has finished airing")
 
+    # followedDictionary[desiredAnime] = strTimer
+    # write_pickle(followedDictionary, followed_pkl)
     # print(re.findall("\d+",timer)) # Regex to get digits from the timer
+    # print(strTimer)
 
-def setTargetTime(strTimer):
+
+def setTargetTime(desiredAnime, strTimer):
     '''Converts and writes the anime episode airing date-time'''
 
     commaSplitList = strTimer.split(',')
@@ -42,7 +48,7 @@ def setTargetTime(strTimer):
 
     targetDate = datetime.now() + timedelta(days=daysSplit, hours=hoursSplit, minutes=minutesSplit)
 
-    #Readable format i.e.(2021-09-04 19:35:14),
+    # Readable format i.e.(2021-09-04 19:35:14),
     # NOTE TO SELF: Replace '%H' with '%I' for 12 hour format
     formatedTargetDate = targetDate.strftime('%Y/%m/%d %H:%M:%S')
 
@@ -52,26 +58,54 @@ def setTargetTime(strTimer):
 
     # writing the dictionary in a pickle file
     write_pickle(followedDictionary, followed_pkl)
+    print(f"it will air on - {followedDictionary[desiredAnime]}, - in exactly {strTimer}.")
     # print('\n')
     # for i, j in followedDictionary.items():
     #     print(i, "--will air on: ", j)
-    countdown(desiredAnime)
+    countdown(desiredAnime, followed_pkl)
 
-def countdown(desiredAnime):
 
-    loadedfile = read_pickle('Following.pkl')
+def checkForAnime(desiredAnime, animeDictionary, followedDictionary):
+    flag = False
+    followedFlag = False
+    for key in followedDictionary.keys():
+        if desiredAnime in key.lower():
+            remaining = countdown(desiredAnime, followed_pkl)
+            # getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
+            print("You are already following this anime, it will air on - ", followedDictionary[key],
+                  f" - in exactly {remaining} seconds")
+            followedFlag = True
+            break
+    if not followedFlag:
+        for key in animeDictionary.keys():
+            if desiredAnime in key.lower():
+                getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
+
+                # print(animeDictionary[desiredAnime])
+                flag = False
+                break
+            else:
+                flag = True
+
+    if flag:
+        print("Your desired anime doesn't exist. BAKA!")
+
+
+def countdown(desiredAnime, followed_pkl):
+    loadedfile = read_pickle(followed_pkl)
     date_time_str = loadedfile[desiredAnime]
     date_time_obj = datetime.strptime(date_time_str, '%Y/%m/%d %H:%M:%S')
     currentTime = datetime.now()
     time_delta = (date_time_obj - currentTime)
 
-    #Converting to seconds
+    # Converting to seconds
     days, seconds = time_delta.days, time_delta.seconds
     hours = days * 24 + seconds // 3600
     minutes = (seconds % 3600) // 60 + (hours * 60)
     seconds = (seconds % 60) + (minutes * 60)
 
     return seconds
+
 
 def merge_pickles(pkl1, pkl2, mergedpkl):
     """Merges two pickle files into one"""
@@ -168,30 +202,23 @@ def scrape_pages(start, end, pklfile):
 
 
 if __name__ == "__main__":
+
     saved_pkl = "AnimeList.pkl"
     followed_pkl = "Following.pkl"
-    flag = False
-
-    # Following line is only for scraping again
-    # scrape_pages(1, 2, saved_pkl)
     followedDictionary = {}
     animeDictionary = read_pickle(saved_pkl)
-    followedDictionary = read_pickle(followed_pkl)
-    animeName = input("Which anime do you want to follow: ")
-    desiredAnime = animeName.lower()
-    for key in followedDictionary.keys():
-        if desiredAnime in key.lower():
-            remaining = countdown(desiredAnime)
-            print("You are already following this anime, it will air on - ", followedDictionary[key], f" - in exactly {remaining} seconds")
-        else:
-            for key in animeDictionary.keys():
-                if desiredAnime in key.lower():
-                    getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
+    if os.path.isfile('Following.pkl'):
+        followedDictionary = read_pickle(followed_pkl)
 
-                    # print(animeDictionary[desiredAnime])
-                    flag = False
-                    break
-                else:
-                    flag = True
-    if flag:
-        print("Your desired anime doesn't exist. BAKA!")
+    while True:
+
+        # Following line is only for scraping again
+        # scrape_pages(1, 2, saved_pkl)
+
+        animeName = input("Which anime do you want to follow: ")
+        if animeName == '-1':
+            break
+
+        desiredAnime = animeName.lower()
+        checkForAnime(desiredAnime, animeDictionary, followedDictionary)
+        print()
