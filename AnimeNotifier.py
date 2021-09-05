@@ -12,6 +12,8 @@ from datetime import timedelta
 sys.setrecursionlimit(10000)
 
 def checkForAnime(desiredAnime, animeDictionary, followedDictionary):
+    '''Checks if the anime is already followed or not'''
+    
     flag = False
     followedFlag = False
     for key in followedDictionary.keys():
@@ -37,6 +39,8 @@ def checkForAnime(desiredAnime, animeDictionary, followedDictionary):
         print("Your desired anime doesn't exist. BAKA!")
 
 def findKeyWithLeastTime(followed_pkl, followedDictionary):
+    '''looks for the anime with least time left for new episode'''
+    
     lowestKey = ""
     lowest = 10000000
     for key in followedDictionary.keys():
@@ -49,6 +53,8 @@ def findKeyWithLeastTime(followed_pkl, followedDictionary):
     return lowest, lowestKey
 
 def countdown(lowest, lowestKey, followed_pkl, followedDictionary):
+    '''countdowns the anime with least time remaining'''
+    
     lowest, lowestKey = findKeyWithLeastTime(followed_pkl, followedDictionary)
     flag = True
     while flag:
