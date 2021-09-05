@@ -1,6 +1,7 @@
 import os
 import pickle
 import re
+import time
 from time import sleep
 import bs4
 import requests
@@ -10,6 +11,58 @@ from datetime import timedelta
 
 sys.setrecursionlimit(10000)
 
+def checkForAnime(desiredAnime, animeDictionary, followedDictionary):
+    flag = False
+    followedFlag = False
+    for key in followedDictionary.keys():
+        if desiredAnime in key.lower():
+            remaining = getTimeInSeconds(desiredAnime, followed_pkl)
+            # getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
+            print("You are already following this anime, it will air on - ", followedDictionary[key],
+                  f" - in exactly {remaining} seconds")
+            followedFlag = True
+            break
+    if not followedFlag:
+        for key in animeDictionary.keys():
+            if desiredAnime in key.lower():
+                getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
+
+                # print(animeDictionary[desiredAnime])
+                flag = False
+                break
+            else:
+                flag = True
+
+    if flag:
+        print("Your desired anime doesn't exist. BAKA!")
+
+def findKeyWithLeastTime(followed_pkl, followedDictionary):
+    lowestKey = ""
+    lowest = 10000000
+    for key in followedDictionary.keys():
+        timeRemaining = getTimeInSeconds(key, followed_pkl)
+        # print(timeRemaining)
+        if int(timeRemaining) < lowest:
+            lowest = int(timeRemaining)
+            lowestKey = key
+
+    return lowest, lowestKey
+
+def countdown(lowest, lowestKey, followed_pkl, followedDictionary):
+    lowest, lowestKey = findKeyWithLeastTime(followed_pkl, followedDictionary)
+    flag = True
+    while flag:
+        lowest = lowest - 1
+        time.sleep(1)
+        if lowest <= 0:
+            flag = False
+
+    if flag == False:
+
+        ####EMAIL FUNCTION#####
+        checkForAnime(lowestKey, animeDictionary, followedDictionary)
+
+# def sendEmail():
 
 def getTimer(url, desiredAnime, followed_pkl):
     """Scrapes the site for the timer"""
@@ -29,7 +82,7 @@ def getTimer(url, desiredAnime, followed_pkl):
     # write_pickle(followedDictionary, followed_pkl)
     # print(re.findall("\d+",timer)) # Regex to get digits from the timer
     # print(strTimer)
-
+    return strTimer
 
 def setTargetTime(desiredAnime, strTimer):
     '''Converts and writes the anime episode airing date-time'''
@@ -62,36 +115,10 @@ def setTargetTime(desiredAnime, strTimer):
     # print('\n')
     # for i, j in followedDictionary.items():
     #     print(i, "--will air on: ", j)
-    countdown(desiredAnime, followed_pkl)
+    getTimeInSeconds(desiredAnime, followed_pkl)
 
 
-def checkForAnime(desiredAnime, animeDictionary, followedDictionary):
-    flag = False
-    followedFlag = False
-    for key in followedDictionary.keys():
-        if desiredAnime in key.lower():
-            remaining = countdown(desiredAnime, followed_pkl)
-            # getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
-            print("You are already following this anime, it will air on - ", followedDictionary[key],
-                  f" - in exactly {remaining} seconds")
-            followedFlag = True
-            break
-    if not followedFlag:
-        for key in animeDictionary.keys():
-            if desiredAnime in key.lower():
-                getTimer(animeDictionary[desiredAnime], desiredAnime, followed_pkl)
-
-                # print(animeDictionary[desiredAnime])
-                flag = False
-                break
-            else:
-                flag = True
-
-    if flag:
-        print("Your desired anime doesn't exist. BAKA!")
-
-
-def countdown(desiredAnime, followed_pkl):
+def getTimeInSeconds(desiredAnime, followed_pkl):
     loadedfile = read_pickle(followed_pkl)
     date_time_str = loadedfile[desiredAnime]
     date_time_obj = datetime.strptime(date_time_str, '%Y/%m/%d %H:%M:%S')
